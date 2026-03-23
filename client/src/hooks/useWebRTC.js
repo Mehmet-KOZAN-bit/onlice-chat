@@ -4,7 +4,8 @@ import { io } from 'socket.io-client';
 const ICE_SERVERS = {
   iceServers: [
     { urls: 'stun:stun.l.google.com:19302' },
-    { urls: 'stun:stun1.l.google.com:19302' }
+    { urls: 'stun:stun1.l.google.com:19302' },
+    { urls: 'stun:stun2.l.google.com:19302' }
   ]
 };
 
@@ -19,6 +20,7 @@ export function useWebRTC() {
   const socketRef = useRef(null);
   const peerConnectionRef = useRef(null);
   const roomIdRef = useRef(null);
+  const iceCandidateQueue = useRef([]); // Fix: Queue for ICE race condition
 
   useEffect(() => {
     socketRef.current = io(SOCKET_URL);
@@ -51,6 +53,7 @@ export function useWebRTC() {
   const createPeerConnection = useCallback((roomId) => {
     const pc = new RTCPeerConnection(ICE_SERVERS);
     peerConnectionRef.current = pc;
+    iceCandidateQueue.current = []; // Reset queue for new connection
 
     if (localStream) {
       localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
@@ -92,10 +95,23 @@ export function useWebRTC() {
       }
     };
 
+    const processIceQueue = async () => {
+      while (iceCandidateQueue.current.length > 0) {
+        const candidate = iceCandidateQueue.current.shift();
+        try {
+          await peerConnectionRef.current.addIceCandidate(candidate);
+        } catch (err) {
+          console.error('Error processing queued ICE candidate:', err);
+        }
+      }
+    };
+
     const handleOffer = async ({ offer }) => {
       if (!peerConnectionRef.current) return;
       try {
         await peerConnectionRef.current.setRemoteDescription(new RTCSessionDescription(offer));
+        await processIceQueue(); // Add caught candidates
+        
         const answer = await peerConnectionRef.current.createAnswer();
         await peerConnectionRef.current.setLocalDescription(answer);
         socket.emit('answer', { roomId: roomIdRef.current, answer });
@@ -108,6 +124,7 @@ export function useWebRTC() {
       if (!peerConnectionRef.current) return;
       try {
         await peerConnectionRef.current.setRemoteDescription(new RTCSessionDescription(answer));
+        await processIceQueue(); // Add caught candidates
       } catch (error) {
         console.error('Error setting remote description:', error);
       }
@@ -116,7 +133,13 @@ export function useWebRTC() {
     const handleIceCandidate = async ({ candidate }) => {
       if (!peerConnectionRef.current) return;
       try {
-        await peerConnectionRef.current.addIceCandidate(new RTCIceCandidate(candidate));
+        const iceCandidate = new RTCIceCandidate(candidate);
+        // If remote description is already set, add immediately. Otherwise, queue it!
+        if (peerConnectionRef.current.remoteDescription && peerConnectionRef.current.remoteDescription.type) {
+          await peerConnectionRef.current.addIceCandidate(iceCandidate);
+        } else {
+          iceCandidateQueue.current.push(iceCandidate);
+        }
       } catch (error) {
         console.error('Error adding ice candidate:', error);
       }
@@ -140,6 +163,7 @@ export function useWebRTC() {
       peerConnectionRef.current.close();
       peerConnectionRef.current = null;
     }
+    iceCandidateQueue.current = [];
     setRemoteStream(null);
   };
 
