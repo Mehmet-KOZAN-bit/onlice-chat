@@ -26,7 +26,14 @@ export function useWebRTC() {
     socketRef.current = io(SOCKET_URL);
 
     if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-      navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+      navigator.mediaDevices.getUserMedia({ 
+        video: { 
+          width: { ideal: 1280 }, 
+          height: { ideal: 720 }, 
+          facingMode: 'user' 
+        }, 
+        audio: true 
+      })
         .then((stream) => setLocalStream(stream))
         .catch((err) => console.error("Media access denied:", err));
     } else {
