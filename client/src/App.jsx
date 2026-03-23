@@ -15,8 +15,8 @@ function App() {
           <div className="bg-blue-600 p-2 rounded-lg">
             <Video className="w-6 h-6 text-white" />
           </div>
-          <h1 className="text-2xl font-bold bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">
-            OmegleClone
+          <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-indigo-500 bg-clip-text text-transparent">
+            Onlice
           </h1>
         </div>
         <div className="flex items-center gap-2 text-sm text-slate-400 font-medium">

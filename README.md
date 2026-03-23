@@ -1,4 +1,4 @@
-# Advanced Anonymous Video Chat (Omegle Clone)
+# Onlice Chat
 
 A production-ready WebRTC random video and text chat application.
 
