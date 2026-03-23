@@ -15,7 +15,7 @@ export const VideoPlayer = ({ stream, isLocal }) => {
       autoPlay
       playsInline
       muted={isLocal}
-      className={`w-full h-full object-contain bg-black ${isLocal ? 'transform scale-x-[-1]' : ''}`}
+      className={`w-full h-full object-cover bg-black ${isLocal ? 'transform scale-x-[-1]' : ''}`}
     />
   );
 };

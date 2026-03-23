@@ -32,9 +32,11 @@ function App() {
         <section className="flex-1 relative bg-black flex flex-col group min-h-[40vh]">
           
           {/* Main Remote Video */}
-          <div className="flex-1 relative w-full h-full">
+          <div className="flex-1 relative w-full h-full flex items-center justify-center p-4 md:p-12">
             {remoteStream ? (
-              <VideoPlayer stream={remoteStream} isLocal={false} />
+              <div className="w-full max-w-4xl aspect-video bg-slate-900 rounded-2xl overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.4)] border border-slate-800">
+                <VideoPlayer stream={remoteStream} isLocal={false} />
+              </div>
             ) : (
               <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-500 gap-4">
                 {status === 'Searching' ? (
